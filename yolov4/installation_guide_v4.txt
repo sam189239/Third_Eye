@@ -1,0 +1,23 @@
+virtualenv tfyolo4
+source tfyolo4/bin/activate
+or 
+tfyolo\Scripts\activate
+
+pip install -r requirements.txt
+
+Download weights into data folder and load video to data/video/test.mp4
+yolov4: https://drive.google.com/open?id=1cewMfusmPjYWbrnuJRuKhPMwRe_b9PaT
+yolov4 tiny: https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-tiny.weights
+
+Converting darknet weights to tensorflow model:
+python save_model.py --model yolov4 
+
+Run yolov4 deep sort object tracker on video:
+python object_tracker.py --video ./data/video/test.mp4 --output ./outputs/demo.avi --model yolov4
+
+
+with yolo-v4 tiny:
+
+python save_model.py --weights ./data/yolov4-tiny.weights --output ./checkpoints/yolov4-tiny-416 --model yolov4 --tiny
+python object_tracker.py --weights ./checkpoints/yolov4-tiny-416 --model yolov4 --video ./data/video/test.mp4 --output ./outputs/tiny.avi --tiny
+
