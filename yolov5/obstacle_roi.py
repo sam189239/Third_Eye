@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     ## Saving Output ##
     size = images[0].shape
-    out = cv2.VideoWriter('out/third_eye.mp4',cv2.VideoWriter_fourcc(*'mp4v'), int(np.mean(FPS)), (size[1],size[0]))
+    out = cv2.VideoWriter('out/third_eye.mp4',cv2.VideoWriter_fourcc(*'mp4v'), 30, (size[1],size[0]))
     for i in range(len(images)):
         out.write(images[i])
     out.release()
