@@ -37,22 +37,25 @@ if __name__ == '__main__':
     ## Image capture ##
     cap = cv2.VideoCapture(video)
     while success:
-
         success , frame = cap.read()
         if not success:
             break
-        output = model(frame)
-        height, width= frame.shape[:2]  
-        left, right = roi * width, (1-roi) * width
-        ROI_region = [[(int(roi * width),height),(int(roi * width),0),(int((1-roi) * width),0),(int((1-roi) * width),height)]]
-        
+
+        ## Detection ##
+        output = model(frame)      
         results = output.pandas().xyxy[0]
         end_time = time.time()
         duration = end_time - start_time
         fps = np.round(1/duration,1)
         start_time = end_time
         FPS.append(fps)
+
+        ## Region of Interest ##
+        height, width= frame.shape[:2]  
+        left, right = roi * width, (1-roi) * width
+        ROI_region = [[(int(roi * width),height),(int(roi * width),0),(int((1-roi) * width),0),(int((1-roi) * width),height)]]
         
+        ## Drawing boxes ##
         for result in results.to_numpy():
             confidence = result[4]
             if confidence >= threshold:
@@ -80,6 +83,7 @@ if __name__ == '__main__':
         # cv2.waitKey(1)
         images.append(box_img)
 
+    ## Saving Output ##
     size = images[0].shape
     out = cv2.VideoWriter('out/third_eye.mp4',cv2.VideoWriter_fourcc(*'mp4v'), int(np.mean(FPS)), (size[1],size[0]))
     for i in range(len(images)):
