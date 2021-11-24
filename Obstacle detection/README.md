@@ -8,7 +8,9 @@ How to run:
 - python "script name".py
 
 roi -> detects objects within a region of interest
+
 obstacle_roi -> detects all obstacles and differentiates between those within and outside the ROI
+
 orw -> adds on to obstacle_roi by giving warning in left, mid and right regions of the roi if two or more obstacles of size above a threshold are present
 
 Tune threshold as per requirement and resolution.
