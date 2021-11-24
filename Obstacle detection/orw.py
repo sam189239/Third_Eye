@@ -7,7 +7,7 @@ from PIL import Image, ImageOps
 
 warnings.simplefilter('ignore')
 
-video = r"data\road.mp4"
+video = r"data\new.mp4"
 
 def resize_with_padding(img, expected_size):
     img.thumbnail((expected_size[0], expected_size[1]))
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     font = cv2.FONT_HERSHEY_SIMPLEX
     threshold = 0.1
     obstacles = ['car', 'person', 'motorcycle', 'train', 'truck']
-    roi = 0.2
+    roi = 0.3
     success = True
     start_time  = time.time()
     images = []
@@ -58,7 +58,7 @@ if __name__ == '__main__':
         mid = int(width / 2)
         ROI_region = [[(int(roi * width),height),(int(roi * width),0),(int((1-roi) * width),0),(int((1-roi) * width),height)]]
         ROI_region2 = [[(int(roi * width),height),(int(roi * width),0),(int((0.5) * width),0),(int((0.5) * width),height)]]
-        
+        box_img = frame
         ## Drawing boxes ##
         for result in results.to_numpy():
             confidence = result[4]
@@ -104,13 +104,13 @@ if __name__ == '__main__':
         final_img = np.asarray(resize_with_padding(Image.fromarray(box_img), dim))
 
         ## Show ##
-        # cv2.imshow("Obstacle detection - warning",final_img)
-        # cv2.waitKey(1)
+        cv2.imshow("Obstacle detection - warning",final_img)
+        cv2.waitKey(1)
         images.append(final_img)
 
     ## Saving Output ##
-    size = images[0].shape
-    out = cv2.VideoWriter('out/third_eye_orw.mp4',cv2.VideoWriter_fourcc(*'mp4v'), int(np.mean(FPS)), (size[1],size[0]))
-    for i in range(len(images)):
-        out.write(images[i])
-    out.release()
+    # size = images[0].shape
+    # out = cv2.VideoWriter('out/third_eye_orw.mp4',cv2.VideoWriter_fourcc(*'mp4v'), int(np.mean(FPS)), (size[1],size[0]))
+    # for i in range(len(images)):
+    #     out.write(images[i])
+    # out.release()

@@ -1,3 +1,6 @@
 trees
-yolov5/te
-yolov5/out
+yolov5s/te
+yolov5s/out
+Obstacle detection/out
+Obstacle detection/te
+yolov4/tfyolo
