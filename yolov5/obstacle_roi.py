@@ -54,6 +54,7 @@ if __name__ == '__main__':
         height, width= frame.shape[:2]  
         left, right = roi * width, (1-roi) * width
         ROI_region = [[(int(roi * width),height),(int(roi * width),0),(int((1-roi) * width),0),(int((1-roi) * width),height)]]
+        ROI_region2 = [[(int(roi * width),height),(int(roi * width),0),(int((0.5) * width),0),(int((0.5) * width),height)]]
         
         ## Drawing boxes ##
         for result in results.to_numpy():
@@ -78,14 +79,15 @@ if __name__ == '__main__':
                 continue
         dim = (800, 600)
         box_img = cv2.rectangle(box_img, ROI_region[0][1],ROI_region[0][3],(0,0,0),1)
+        # box_img = cv2.rectangle(box_img, ROI_region2[0][1],ROI_region2[0][3],(0,0,0),1)
         final_img = np.asarray(resize_with_padding(Image.fromarray(box_img), dim))
-        # cv2.imshow("Object detection",final_img)
-        # cv2.waitKey(1)
-        images.append(box_img)
+        cv2.imshow("Object detection",final_img)
+        cv2.waitKey(1)
+        images.append(final_img)
 
     ## Saving Output ##
     size = images[0].shape
-    out = cv2.VideoWriter('out/third_eye.mp4',cv2.VideoWriter_fourcc(*'mp4v'), 30, (size[1],size[0]))
+    out = cv2.VideoWriter('out/third_eye.mp4',cv2.VideoWriter_fourcc(*'mp4v'), 29, (size[1],size[0]))
     for i in range(len(images)):
         out.write(images[i])
     out.release()
