@@ -1,3 +1,4 @@
+# python track.py --source ..\\..\\data\\road.mp4 --yolo_weights yolov5s.pt 
 # limit the number of cpus used by high performance libraries
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -35,7 +36,7 @@ def detect(opt):
             opt.save_txt, opt.imgsz, opt.evaluate, opt.half
     webcam = source == '0' or source.startswith(
         'rtsp') or source.startswith('http') or source.endswith('.txt')
-
+    show_vid = True
     # initialize deepsort
     cfg = get_config()
     cfg.merge_from_file(opt.config_deepsort)
