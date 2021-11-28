@@ -26,8 +26,8 @@ if __name__ == '__main__':
 
     ## Setting parameters and variables##
     font = cv2.FONT_HERSHEY_SIMPLEX
-    threshold = 0.1
-    obstacles = ['car', 'person', 'motorcycle', 'train', 'truck']
+    threshold = 0.5
+    obstacles = ['car', 'person', 'motorcycle', 'train', 'truck','bicycle']
     roi = 0.3
     success = True
     start_time  = time.time()
@@ -82,7 +82,7 @@ if __name__ == '__main__':
                 if label in obstacles: #in ['car']:
                     box_img = cv2.rectangle(box_img, (x1,y1),(x2,y2),color,2)
                     box_img = cv2.putText(box_img,label,(x1-1,y1-1),font,0.5,color,1)
-                    box_img = cv2.putText(box_img,str(area),(x2-1,y1-1),font,0.5,(255,0,255),1)
+                    box_img = cv2.putText(box_img,str(format(confidence,".2f"))+", "+str(area),(x2-2,y1-1),font,0.5,(255,0,255),1)
                     box_img = cv2.putText(box_img,f"FPS: {fps}",(32,32),font,0.5,(255,0,255),2)
             else:
                 continue
@@ -109,8 +109,9 @@ if __name__ == '__main__':
         images.append(final_img)
 
     ## Saving Output ##
-    # size = images[0].shape
-    # out = cv2.VideoWriter('out/third_eye_orw.mp4',cv2.VideoWriter_fourcc(*'mp4v'), int(np.mean(FPS)), (size[1],size[0]))
-    # for i in range(len(images)):
-    #     out.write(images[i])
-    # out.release()
+    size = images[0].shape
+    # int(np.mean(FPS))
+    out = cv2.VideoWriter('out/new_orw.mp4',cv2.VideoWriter_fourcc(*'mp4v'), 29, (size[1],size[0]))
+    for i in range(len(images)):
+        out.write(images[i])
+    out.release()
