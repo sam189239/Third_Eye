@@ -4,10 +4,10 @@ from deep_sort_pytorch.utils.parser import get_config
 from deep_sort_pytorch.deep_sort import DeepSort
 import cv2
 import torch
+import warnings
+warnings.filterwarnings("ignore")
 from PIL import Image,ImageOps
 import numpy as np
-import warnings
-warnings.simplefilter('ignore')
 
 def resize_with_padding(img, expected_size):
     img.thumbnail((expected_size[0], expected_size[1]))
@@ -17,7 +17,6 @@ def resize_with_padding(img, expected_size):
     pad_height = delta_height // 2
     padding = (pad_width, pad_height, delta_width - pad_width, delta_height - pad_height)
     return np.asarray(ImageOps.expand(img, padding))
-
 
 
 path = "../../data/new.mp4"
@@ -74,8 +73,8 @@ while True:
 
     success, frame = cap.read()
 
-    print(success)
     if not success:
+        print("No video found!")
         break
 
     # imgsz = (frame.shape[1],frame.shape[0])
@@ -86,11 +85,11 @@ while True:
     # frame = cv2.resize(frame,(640,480), interpolation = cv2.INTER_AREA)
     
     frame = resize_with_padding(Image.fromarray(frame), (640, 480))
+    
     results = model(frame)
 
 
     det = results.xyxy[0]
-    print(det)
     if det is not None and len(det):
         # det[:, :4] = scale_coords((640,352), det[:, :4], frame.shape).round()
         x1y1x2y2 = det[:,0:4]
@@ -110,15 +109,6 @@ while True:
                 x1,y1,xc,yc = int(bboxes[0]),int(bboxes[1]),int(bboxes[2]),int(bboxes[3])
                 id = output[4]
                 cls = output[5]
-                ###########
-                # h = yc - y1
-                # w = xc - x1
-                # x1 = int(xc - w/2)
-                # y1 = int(yc - h/2)
-                # x2 = int(xc + w/2)
-                # y2 = int(yc + h/2)
-                     
-                ###########
                 c = int(cls)  # integer class
                 label = f'{id} {names[c]} {conf:.2f}'
                 frame = cv2.rectangle(frame, (x1,y1),(xc,yc),(0,255,0),2)
