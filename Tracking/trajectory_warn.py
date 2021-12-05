@@ -197,7 +197,7 @@ if __name__ == '__main__':
                 
             deepsort.increment_ages()
 
-    save_output(images, fps = 29)
+    # save_output(images, fps = 29)
 
 
 
