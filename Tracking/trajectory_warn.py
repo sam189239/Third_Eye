@@ -14,12 +14,12 @@ import math
 
 
 ## Setting parameters and variables##
-path = "../data/new.mp4"
+path = "../data/client_vid_1.mp4"
 deep_sort_weights = 'deep_sort_pytorch/deep_sort/deep/checkpoint/ckpt.t7'
 config_deepsort="deep_sort_pytorch/configs/deep_sort.yaml"
 font = cv2.FONT_HERSHEY_DUPLEX
-obstacles = ['car', 'person', 'motorcycle', 'train', 'truck','bicycle']
-roi = 0.25
+obstacles = ['car', 'person', 'motorcycle','truck','bicycle', 'parking meter', 'cow', 'dog']
+roi = 0.35
 success = True
 threshold = 0.3
 size_threshold = 60
@@ -37,28 +37,53 @@ names = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', '
         'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear',
         'hair drier', 'toothbrush']
 
+traj_len = 50
 
 def new_obs(label):
     return {
         "c_hist":deque(maxlen=2), 
-        "size_hist":deque(maxlen=2), 
-        "angle":0, 
+        "area_hist":deque(maxlen=5), 
+        "angle":deque(maxlen=5), 
         "large":False, 
         "label":label
     }
 
+def find_angle(mid, height, xc, yc):
+    return (format(math.atan((mid - xc) / ((height - yc) + 0.001)) * (180/math.pi),".2f"))
 
 def track_obs(database, id, xc, yc, frame):
+    height, width= frame.shape[:2] 
+    mid = int(width / 2)
+    
+    ## Trajectory ##
     database[id]["c_hist"].append((int(xc),int(yc)))
     c_hist = database[id]["c_hist"]
     if len(c_hist) == 2:
         lenab = math.sqrt((c_hist[0][0]-c_hist[1][0])**2+(c_hist[0][1]-c_hist[1][1])**2)
         length = 100
-        cx = c_hist[1][0] + (c_hist[1][0]-c_hist[0][0]) / (lenab + 0.001) *length
-        cy = c_hist[1][1] + (c_hist[1][1]-c_hist[0][1]) / (lenab+ 0.001)  *length 
-                 
-        frame = cv2.arrowedLine(frame, c_hist[0], (int(cx),int(cy)),(123,232,324), 2)
+
+        # Arrow for trajectory
+        # cx = c_hist[1][0] + (c_hist[1][0]-c_hist[0][0]) / (lenab + 0.001) *length
+        # cy = c_hist[1][1] + (c_hist[1][1]-c_hist[0][1]) / (lenab+ 0.001)  *length 
+
+        # angle = math.atan(c_hist[1][1] - c_hist[0][1]) / ((c_hist[1][0] - c_hist[0][0]) + 0.001)
+        # cx = c_hist[1][0] + (traj_len * math.cos(angle) * lenab)
+        # cy = math.tan(angle) * (cx - c_hist[1][0]) + c_hist[1][1]
+        # frame = cv2.arrowedLine(frame, c_hist[0], (int(cx),int(cy)),(123,232,324), 2)
+
+    ## Angle ##
+    database[id]['angle'].append(find_angle(mid, height, xc, yc))
+    frame = cv2.putText(frame,str(database[id]['angle'][-1]),(xc,yc),font,0.5,(255,0,255),1)
+
+
     return database, frame
+
+# def get_area_slope(areas):
+#     if(len(areas)<=1):
+#         return 0
+#     sum = 0
+#     for i in range(1, len(areas)):
+
 
 def draw_boxes(database, frame, outputs, confs, left, right, obs):
     mid = int((left+right)/2)
@@ -69,14 +94,18 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs):
                 bboxes = output[0:4]
                 x1,y1,x2,y2 = int(bboxes[0]),int(bboxes[1]),int(bboxes[2]),int(bboxes[3])
                 id = output[4]
-                xc = x1+(x2-x1)/2 # center-x
-                yc = y1 + (y2-y1)/2 # center-y
+                xc = int(x1+(x2-x1)/2) # center-x
+                yc = int(y1 + (y2-y1)/2) # center-y
                 area = int(((x2-x1) * (y2-y1))/100)
                 color = (0,255,0)
                 
                 ## Creating obs in database
                 if id not in database.keys():
                     database[id] = new_obs(label)
+
+                ## Area ##
+                database[id]['area_hist'].append(area)
+                # area_slope = get_area_slope(database[id]['area'])
 
                 ## Trajectory ##
                 database, frame = track_obs(database, id, xc, yc, frame)
@@ -97,7 +126,18 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs):
                 label = f'{id} {area} {conf:.2f}'
                 frame = cv2.rectangle(frame, (x1,y1),(x2,y2),color,2)
                 frame = cv2.putText(frame,label,(x1-1,y1-1),font,0.5,(255,0,255),1)
+
+                height, width= frame.shape[:2]
+                refpt = (int(width/2),int(height))
+                dist = np.round(np.sqrt((refpt[0] - yc)**2 + (refpt[1] - xc)),1)
+                frame = cv2.line(frame,refpt , (int(width/2),0), (0,0,234),2)
+                # frame = cv2.putText(frame,str(dist),(xc,yc),font,0.5,(255,0,255),1)
+                frame = cv2.arrowedLine(frame, refpt,(xc,yc),(123,232,324), 1)
                 
+                
+    # 2 thresholds of size, threshold for slopes
+    # missing obstacle handling
+    # appending direct values or avg scaled values for angle and trajectory
 
     ## Warning ##
     for i in range(3):
@@ -143,7 +183,7 @@ def resize_with_padding(img, expected_size):
 
 def save_output(images, fps):
     size = images[0].shape
-    out = cv2.VideoWriter('third_eye_tracker.mp4',cv2.VideoWriter_fourcc(*'mp4v'), fps, (size[1],size[0]))
+    out = cv2.VideoWriter('third_eye_tracker2.mp4',cv2.VideoWriter_fourcc(*'mp4v'), fps, (size[1],size[0]))
     for i in range(len(images)):
         out.write(images[i])
     out.release()
@@ -174,12 +214,12 @@ if __name__ == '__main__':
             print("No video found!")
             break
         
-        # frame = resize_with_padding(Image.fromarray(frame), dim)  
         obs = [0,0,0]
         warn = [" ", " ", " "]
-
+        frame, left, right = draw_ROI(frame, roi)
+        # frame = resize_with_padding(Image.fromarray(frame), dim)
         results = model(frame)
-        box_img, left, right = draw_ROI(frame, roi)
+        
         det = results.xyxy[0]
         if det is not None and len(det):
             x1y1x2y2 = det[:,0:4]
@@ -197,7 +237,7 @@ if __name__ == '__main__':
                 
             deepsort.increment_ages()
 
-    # save_output(images, fps = 29)
+    save_output(images, fps = 29)
 
 
 

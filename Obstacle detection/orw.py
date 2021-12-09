@@ -7,7 +7,7 @@ from PIL import Image, ImageOps
 
 warnings.simplefilter('ignore')
 
-video = r"..\data\new.mp4"
+video = r"..\data\client_vid_1.mp4"
 
 def resize_with_padding(img, expected_size):
     img.thumbnail((expected_size[0], expected_size[1]))
