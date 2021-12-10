@@ -15,7 +15,7 @@ import math
 
 
 ## Setting parameters and variables##
-save_dir = 'third_eye_tracker0.mp4'
+save_dir = 'out\third_eye_tracker0.mp4'
 path = "..\data\client_vid_1.mp4"
 deep_sort_weights = 'deep_sort_pytorch/deep_sort/deep/checkpoint/ckpt.t7'
 config_deepsort="deep_sort_pytorch/configs/deep_sort.yaml"
@@ -29,7 +29,6 @@ size_threshold_near = 65
 images = []
 dim = (640, 480)
 database = {}
-counter = 0
 names = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light',
         'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
         'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
@@ -95,7 +94,7 @@ def get_del(vals):
         delsum += vals[i] - vals[i-1]
     return delsum / len(vals)
 
-def draw_boxes(database, frame, outputs, confs, left, right, obs):
+def draw_boxes(database, frame, outputs, confs, left, right, obs, warn):
     mid = int((left+right)/2)
     if len(outputs) > 0:
         for j, (output, conf) in enumerate(zip(outputs, confs)):  
@@ -137,15 +136,17 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs):
                 if x2>=left and x1<=right:
                     color = (0,255,255)    
                     if area>database[id]["angle_inc"] and float(database[id]['del_area']) > 0: 
-                            color = (0,0,255)
+                        # Within ROI, angle dec, size inc
+                            color = (0,0,255) # Warning
                             if x2 <= mid:
                                 obs[0] += 1
                             elif x1 >= mid:
                                 obs[1] += 1
                             else:
                                 obs[2] += 1
-                elif (database[id]['del_angle'] < 0 and database[id]['del_area'] > 0) and area >= size_threshold_near:
-                    color = (0,0,255)
+                elif (database[id]['del_angle'] < 0 and database[id]['del_area'] > 0) and area >= size_threshold_near: 
+                    # Outside ROI, angle dec, size inc, size beyond threshold
+                    color = (0,0,255) # Warning
 
                 # label = f'{id} {database[id]['del_area']} {conf:.2f}'
                 label = f'{database[id]["del_area"]}'
@@ -170,15 +171,15 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs):
     frame = cv2.putText(frame,str(obs[1]) + warn[1],(right,frame.shape[:2][0]),font,0.5,(0,0,255),2)
     return database, frame
 
-def draw_ROI(box_img,roi):
+def draw_ROI(frame,roi):
     height, width= frame.shape[:2]  
     left, right = int(roi * width), int((1-roi) * width)
     mid = int(width / 2)
     ROI_region = [[(left,height),(left,0),(right,0),(right,height)]]
     ROI_region2 = [[(left,height),(left,0),(mid,0),(mid,height)]]
-    box_img = cv2.rectangle(box_img, ROI_region[0][1],ROI_region[0][3],(0,0,0),1)
-    box_img = cv2.rectangle(box_img, ROI_region2[0][1],ROI_region2[0][3],(0,0,0),1)
-    return box_img, left, right
+    frame = cv2.rectangle(frame, ROI_region[0][1],ROI_region[0][3],(0,0,0),1)
+    frame = cv2.rectangle(frame, ROI_region2[0][1],ROI_region2[0][3],(0,0,0),1)
+    return frame, left, right
 
 def x1y1x2y2_to_xywh(x1y1x2y2):
     xywhs = torch.zeros_like(x1y1x2y2)
@@ -225,7 +226,7 @@ def track():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
 
-
+    database = {}
     cap = cv2.VideoCapture(path)
 
     while True:
@@ -248,8 +249,7 @@ def track():
             confs = det[:,4]
             clss = det[:,5]
             outputs = deepsort.update(xywhs, confs, clss, frame)
-            counter += 1
-            database, frame = draw_boxes(database, frame, outputs, confs, left, right, obs)
+            database, frame = draw_boxes(database, frame, outputs, confs, left, right, obs, warn)
             images.append(frame)
             cv2.imshow("Object detection",frame)
             cv2.waitKey(1)
@@ -267,6 +267,7 @@ if __name__ == '__main__':
 
 
 
-# 2 thresholds of size, threshold for slopes
+# threshold for slopes check necessity
 # missing obstacle handling
 # removing prev values if change is too much
+# global threshold on size
