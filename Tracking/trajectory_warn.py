@@ -1,4 +1,5 @@
 
+from numpy.lib import arraysetops
 from numpy.lib.function_base import angle
 from yolov5.utils.downloads import attempt_download
 from deep_sort_pytorch.utils.parser import get_config
@@ -14,15 +15,17 @@ import math
 
 
 ## Setting parameters and variables##
-path = "../data/client_vid_1.mp4"
+save_dir = 'third_eye_tracker0.mp4'
+path = "..\data\client_vid_1.mp4"
 deep_sort_weights = 'deep_sort_pytorch/deep_sort/deep/checkpoint/ckpt.t7'
 config_deepsort="deep_sort_pytorch/configs/deep_sort.yaml"
 font = cv2.FONT_HERSHEY_DUPLEX
 obstacles = ['car', 'person', 'motorcycle','truck','bicycle', 'parking meter', 'cow', 'dog']
-roi = 0.35
+roi = 0.3
 success = True
 threshold = 0.3
-size_threshold = 60
+size_threshold = 30
+size_threshold_near = 65
 images = []
 dim = (640, 480)
 database = {}
@@ -43,13 +46,17 @@ def new_obs(label):
     return {
         "c_hist":deque(maxlen=2), 
         "area_hist":deque(maxlen=5), 
-        "angle":deque(maxlen=5), 
+        "angle_hist":deque(maxlen=5), 
         "large":False, 
-        "label":label
+        "label":label,
+        "del_area":0,
+        "del_angle":0,
+        "angle_inc":False,
+        "area_inc":False
     }
 
 def find_angle(mid, height, xc, yc):
-    return (format(math.atan((mid - xc) / ((height - yc) + 0.001)) * (180/math.pi),".2f"))
+    return np.abs(math.atan((mid - xc) / ((height - yc) + 0.001)) * (180/math.pi))
 
 def track_obs(database, id, xc, yc, frame):
     height, width= frame.shape[:2] 
@@ -72,18 +79,21 @@ def track_obs(database, id, xc, yc, frame):
         # frame = cv2.arrowedLine(frame, c_hist[0], (int(cx),int(cy)),(123,232,324), 2)
 
     ## Angle ##
-    database[id]['angle'].append(find_angle(mid, height, xc, yc))
-    frame = cv2.putText(frame,str(database[id]['angle'][-1]),(xc,yc),font,0.5,(255,0,255),1)
-
-
+    database[id]['angle_hist'].append(find_angle(mid, height, xc, yc))
+    # frame = cv2.putText(frame,str(database[id]['angle_hist'][-1]),(xc,yc),font,0.5,(255,0,255),1)
+    del_angle= get_del(database[id]['angle_hist'])
+    database[id]['del_angle'] = del_angle
+    frame = cv2.putText(frame,str(format(database[id]['del_angle'],".2f")),(xc,yc),font,0.5,(255,0,255),1)
+    database[id]["angle_inc"] = database[id]['del_angle'] < 0
     return database, frame
 
-# def get_area_slope(areas):
-#     if(len(areas)<=1):
-#         return 0
-#     sum = 0
-#     for i in range(1, len(areas)):
-
+def get_del(vals):
+    if(len(vals)<=1):
+        return 0
+    delsum = 0
+    for i in range(1, len(vals)):
+        delsum += vals[i] - vals[i-1]
+    return delsum / len(vals)
 
 def draw_boxes(database, frame, outputs, confs, left, right, obs):
     mid = int((left+right)/2)
@@ -105,25 +115,40 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs):
 
                 ## Area ##
                 database[id]['area_hist'].append(area)
-                # area_slope = get_area_slope(database[id]['area'])
-
+                database[id]['del_area']= get_del(database[id]['area_hist'])
+                # database[id]["area_inc"] = 
                 ## Trajectory ##
                 database, frame = track_obs(database, id, xc, yc, frame)
 
-                ## Based on size and location ##
+                # # Based on size and location ##
+                # if x2>=left and x1<=right:
+                #     if area < size_threshold:
+                #         color = (0,255,255)
+                #     else:
+                #         color = (0,0,255)
+                #         if x2 <= mid:
+                #             obs[0] += 1
+                #         elif x1 >= mid:
+                #             obs[1] += 1
+                #         else:
+                #             obs[2] += 1
+
+                ## Based on del_area and del_angle ##
                 if x2>=left and x1<=right:
-                    if area < size_threshold:
-                        color = (0,255,255)
-                    else:
-                        color = (0,0,255)
-                        if x2 <= mid:
-                            obs[0] += 1
-                        elif x1 >= mid:
-                            obs[1] += 1
-                        else:
-                            obs[2] += 1
-                        
-                label = f'{id} {area} {conf:.2f}'
+                    color = (0,255,255)    
+                    if area>database[id]["angle_inc"] and float(database[id]['del_area']) > 0: 
+                            color = (0,0,255)
+                            if x2 <= mid:
+                                obs[0] += 1
+                            elif x1 >= mid:
+                                obs[1] += 1
+                            else:
+                                obs[2] += 1
+                elif (database[id]['del_angle'] < 0 and database[id]['del_area'] > 0) and area >= size_threshold_near:
+                    color = (0,0,255)
+
+                # label = f'{id} {database[id]['del_area']} {conf:.2f}'
+                label = f'{database[id]["del_area"]}'
                 frame = cv2.rectangle(frame, (x1,y1),(x2,y2),color,2)
                 frame = cv2.putText(frame,label,(x1-1,y1-1),font,0.5,(255,0,255),1)
 
@@ -135,13 +160,10 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs):
                 frame = cv2.arrowedLine(frame, refpt,(xc,yc),(123,232,324), 1)
                 
                 
-    # 2 thresholds of size, threshold for slopes
-    # missing obstacle handling
-    # appending direct values or avg scaled values for angle and trajectory
 
     ## Warning ##
     for i in range(3):
-        if obs[i] >= 2:
+        if obs[i] >= 1:
             warn[i] += "WARNING"
     frame = cv2.putText(frame,str(obs[0]) + warn[0],(left,frame.shape[:2][0]),font,0.5,(0,0,255),2)
     frame = cv2.putText(frame,str(obs[2]) + warn[2],(mid,frame.shape[:2][0]),font,0.5,(0,0,255),2)
@@ -183,13 +205,12 @@ def resize_with_padding(img, expected_size):
 
 def save_output(images, fps):
     size = images[0].shape
-    out = cv2.VideoWriter('third_eye_tracker2.mp4',cv2.VideoWriter_fourcc(*'mp4v'), fps, (size[1],size[0]))
+    out = cv2.VideoWriter(save_dir,cv2.VideoWriter_fourcc(*'mp4v'), fps, (size[1],size[0]))
     for i in range(len(images)):
         out.write(images[i])
     out.release()
 
-if __name__ == '__main__':
-
+def track():
     # Initialize deepsort
     cfg = get_config()
     cfg.merge_from_file(config_deepsort)
@@ -240,4 +261,12 @@ if __name__ == '__main__':
     save_output(images, fps = 29)
 
 
+if __name__ == '__main__':
+    track()
 
+
+
+
+# 2 thresholds of size, threshold for slopes
+# missing obstacle handling
+# removing prev values if change is too much
