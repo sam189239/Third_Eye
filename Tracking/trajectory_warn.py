@@ -271,3 +271,4 @@ if __name__ == '__main__':
 # missing obstacle handling
 # removing prev values if change is too much
 # global threshold on size
+# tracking readme
