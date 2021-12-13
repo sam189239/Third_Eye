@@ -15,8 +15,8 @@ import math
 
 
 ## Setting parameters and variables##
-save_dir = 'out\third_eye_tracker0.mp4'
-path = "..\data\client_vid_1.mp4"
+save_dir =r'out\third_eye_tracker3.mp4'
+path = r"..\data\VID-20211208-WA0003.mp4"
 deep_sort_weights = 'deep_sort_pytorch/deep_sort/deep/checkpoint/ckpt.t7'
 config_deepsort="deep_sort_pytorch/configs/deep_sort.yaml"
 font = cv2.FONT_HERSHEY_DUPLEX
@@ -44,14 +44,15 @@ traj_len = 50
 def new_obs(label):
     return {
         "c_hist":deque(maxlen=2), 
-        "area_hist":deque(maxlen=5), 
-        "angle_hist":deque(maxlen=5), 
+        "area_hist":deque(maxlen=10), 
+        "angle_hist":deque(maxlen=10), 
         "large":False, 
         "label":label,
         "del_area":0,
         "del_angle":0,
-        "angle_inc":False,
-        "area_inc":False
+        # "angle_inc":False,
+        # "area_inc":False,
+        "warning":deque(maxlen=10)
     }
 
 def find_angle(mid, height, xc, yc):
@@ -83,7 +84,7 @@ def track_obs(database, id, xc, yc, frame):
     del_angle= get_del(database[id]['angle_hist'])
     database[id]['del_angle'] = del_angle
     frame = cv2.putText(frame,str(format(database[id]['del_angle'],".2f")),(xc,yc),font,0.5,(255,0,255),1)
-    database[id]["angle_inc"] = database[id]['del_angle'] < 0
+    # database[id]["angle_inc"] = database[id]['del_angle'] < 0
     return database, frame
 
 def get_del(vals):
@@ -99,7 +100,7 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs, warn):
     if len(outputs) > 0:
         for j, (output, conf) in enumerate(zip(outputs, confs)):  
             label = names[int(output[5])]  # integer class
-            if conf > threshold and label in obstacles:                   
+            if conf > threshold and (label in obstacles):                   
                 bboxes = output[0:4]
                 x1,y1,x2,y2 = int(bboxes[0]),int(bboxes[1]),int(bboxes[2]),int(bboxes[3])
                 id = output[4]
@@ -107,58 +108,65 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs, warn):
                 yc = int(y1 + (y2-y1)/2) # center-y
                 area = int(((x2-x1) * (y2-y1))/100)
                 color = (0,255,0)
-                
-                ## Creating obs in database
-                if id not in database.keys():
-                    database[id] = new_obs(label)
 
-                ## Area ##
-                database[id]['area_hist'].append(area)
-                database[id]['del_area']= get_del(database[id]['area_hist'])
-                # database[id]["area_inc"] = 
-                ## Trajectory ##
-                database, frame = track_obs(database, id, xc, yc, frame)
+                if area>size_threshold:
+                    ## Creating obs in database
+                    if id not in database.keys():
+                        database[id] = new_obs(label)
+                    
+                    ## Area ##
+                    database[id]['area_hist'].append(area)
+                    database[id]['del_area']= get_del(database[id]['area_hist'])
+                    # database[id]["area_inc"] = 
+                    ## Trajectory ##
+                    database, frame = track_obs(database, id, xc, yc, frame)
+                    
+                    # # Based on size and location ##
+                    # if x2>=left and x1<=right:
+                    #     if area < size_threshold:
+                    #         color = (0,255,255)
+                    #     else:
+                    #         color = (0,0,255)
+                    #         if x2 <= mid:
+                    #             obs[0] += 1
+                    #         elif x1 >= mid:
+                    #             obs[1] += 1
+                    #         else:
+                    #             obs[2] += 1
 
-                # # Based on size and location ##
-                # if x2>=left and x1<=right:
-                #     if area < size_threshold:
-                #         color = (0,255,255)
-                #     else:
-                #         color = (0,0,255)
-                #         if x2 <= mid:
-                #             obs[0] += 1
-                #         elif x1 >= mid:
-                #             obs[1] += 1
-                #         else:
-                #             obs[2] += 1
+                    ## Based on del_area and del_angle ##
+                    if x2>=left and x1<=right:
+                        color = (0,255,255)    
+                        if database[id]["del_angle"] < 0 and database[id]['del_area'] > 0: 
+                            # Within ROI, angle dec, size inc
+                                database[id]["warning"].append(True)       
+                        else:
+                            database[id]["warning"].append(False)
+                    elif (database[id]['del_angle'] < 0 and database[id]['del_area'] > 0) and area >= size_threshold_near: 
+                        # Outside ROI, angle dec, size inc, size beyond threshold
+                        database[id]["warning"].append(True)
+                    else:
+                        database[id]["warning"].append(False)
 
-                ## Based on del_area and del_angle ##
-                if x2>=left and x1<=right:
-                    color = (0,255,255)    
-                    if area>database[id]["angle_inc"] and float(database[id]['del_area']) > 0: 
-                        # Within ROI, angle dec, size inc
-                            color = (0,0,255) # Warning
-                            if x2 <= mid:
-                                obs[0] += 1
-                            elif x1 >= mid:
-                                obs[1] += 1
-                            else:
-                                obs[2] += 1
-                elif (database[id]['del_angle'] < 0 and database[id]['del_area'] > 0) and area >= size_threshold_near: 
-                    # Outside ROI, angle dec, size inc, size beyond threshold
-                    color = (0,0,255) # Warning
+                    if np.sum(database[id]["warning"])>=5:
+                        color = (0,0,255) # Warning
+                        if x2 <= mid:
+                            obs[0] += 1
+                        elif x1 >= mid:
+                            obs[1] += 1
+                        else:
+                            obs[2] += 1
+                    # label = f'{id} {database[id]['del_area']} {conf:.2f}'
+                    label = f'{database[id]["del_area"]}'
+                    frame = cv2.rectangle(frame, (x1,y1),(x2,y2),color,2)
+                    frame = cv2.putText(frame,label,(x1-1,y1-1),font,0.5,(255,0,255),1)
 
-                # label = f'{id} {database[id]['del_area']} {conf:.2f}'
-                label = f'{database[id]["del_area"]}'
-                frame = cv2.rectangle(frame, (x1,y1),(x2,y2),color,2)
-                frame = cv2.putText(frame,label,(x1-1,y1-1),font,0.5,(255,0,255),1)
-
-                height, width= frame.shape[:2]
-                refpt = (int(width/2),int(height))
-                dist = np.round(np.sqrt((refpt[0] - yc)**2 + (refpt[1] - xc)),1)
-                frame = cv2.line(frame,refpt , (int(width/2),0), (0,0,234),2)
-                # frame = cv2.putText(frame,str(dist),(xc,yc),font,0.5,(255,0,255),1)
-                frame = cv2.arrowedLine(frame, refpt,(xc,yc),(123,232,324), 1)
+                    height, width= frame.shape[:2]
+                    refpt = (int(width/2),int(height))
+                    dist = np.round(np.sqrt((refpt[0] - yc)**2 + (refpt[1] - xc)),1)
+                    frame = cv2.line(frame,refpt , (int(width/2),0), (0,0,234),2)
+                    # frame = cv2.putText(frame,str(dist),(xc,yc),font,0.5,(255,0,255),1)
+                    frame = cv2.arrowedLine(frame, refpt,(xc,yc),(123,232,324), 1)
                 
                 
 
@@ -267,8 +275,12 @@ if __name__ == '__main__':
 
 
 
-# threshold for slopes check necessity
+# threshold for slopes check necessity - X
 # missing obstacle handling
 # removing prev values if change is too much
-# global threshold on size
+# global threshold on size - X
 # tracking readme
+# avg the warnings over n frames - X
+# unique thresholds
+# width instead of area
+# wider fov - inform
