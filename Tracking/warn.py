@@ -15,17 +15,18 @@ import math
 
 
 ## Setting parameters and variables##
-save_dir =r'out\third_eye_tracker3.mp4'
-path = r"..\data\VID-20211208-WA0003.mp4"
+save_dir =r'out\third_eye_tracker1.mp4'
+path = r"..\data\VID-20211208-WA0001.mp4"
 deep_sort_weights = 'deep_sort_pytorch/deep_sort/deep/checkpoint/ckpt.t7'
 config_deepsort="deep_sort_pytorch/configs/deep_sort.yaml"
 font = cv2.FONT_HERSHEY_DUPLEX
 obstacles = ['car', 'person', 'motorcycle','truck','bicycle', 'parking meter', 'cow', 'dog']
 roi = 0.3
+ext_roi = 0.1
 success = True
 threshold = 0.3
-size_threshold = 30
-size_threshold_near = 65
+size_threshold = {'car':30, 'person':30, 'motorcycle':30,'truck':30,'bicycle':30, 'parking meter':30, 'cow':30, 'dog':30}
+size_threshold_near = {'car':65, 'person':65, 'motorcycle':65,'truck':65,'bicycle':65, 'parking meter':65, 'cow':65, 'dog':65}
 images = []
 dim = (640, 480)
 database = {}
@@ -40,19 +41,19 @@ names = ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', '
         'hair drier', 'toothbrush']
 
 traj_len = 50
+warn_avg_size = 20
+del_angle_threshold = 0.2
 
 def new_obs(label):
     return {
         "c_hist":deque(maxlen=2), 
-        "area_hist":deque(maxlen=10), 
-        "angle_hist":deque(maxlen=10), 
+        "area_hist":deque(maxlen=warn_avg_size), 
+        "angle_hist":deque(maxlen=warn_avg_size), 
         "large":False, 
         "label":label,
         "del_area":0,
         "del_angle":0,
-        # "angle_inc":False,
-        # "area_inc":False,
-        "warning":deque(maxlen=10)
+        "warning":deque(maxlen=warn_avg_size)
     }
 
 def find_angle(mid, height, xc, yc):
@@ -108,8 +109,9 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs, warn):
                 yc = int(y1 + (y2-y1)/2) # center-y
                 area = int(((x2-x1) * (y2-y1))/100)
                 color = (0,255,0)
-
-                if area>size_threshold:
+                height, width= frame.shape[:2]
+                left_ext, right_ext = int(ext_roi*width), int((1-ext_roi) * width)
+                if area>size_threshold[label] and (xc>=left_ext and xc<=right_ext):
                     ## Creating obs in database
                     if id not in database.keys():
                         database[id] = new_obs(label)
@@ -117,7 +119,7 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs, warn):
                     ## Area ##
                     database[id]['area_hist'].append(area)
                     database[id]['del_area']= get_del(database[id]['area_hist'])
-                    # database[id]["area_inc"] = 
+
                     ## Trajectory ##
                     database, frame = track_obs(database, id, xc, yc, frame)
                     
@@ -137,18 +139,18 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs, warn):
                     ## Based on del_area and del_angle ##
                     if x2>=left and x1<=right:
                         color = (0,255,255)    
-                        if database[id]["del_angle"] < 0 and database[id]['del_area'] > 0: 
+                        if database[id]["del_angle"] < del_angle_threshold and database[id]['del_area'] > 0: 
                             # Within ROI, angle dec, size inc
                                 database[id]["warning"].append(True)       
                         else:
                             database[id]["warning"].append(False)
-                    elif (database[id]['del_angle'] < 0 and database[id]['del_area'] > 0) and area >= size_threshold_near: 
+                    elif (database[id]['del_angle'] < 0 and database[id]['del_area'] > 0) and area >= size_threshold_near[label]: 
                         # Outside ROI, angle dec, size inc, size beyond threshold
                         database[id]["warning"].append(True)
                     else:
                         database[id]["warning"].append(False)
 
-                    if np.sum(database[id]["warning"])>=5:
+                    if np.sum(database[id]["warning"])>=(warn_avg_size/2):
                         color = (0,0,255) # Warning
                         if x2 <= mid:
                             obs[0] += 1
@@ -156,16 +158,14 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs, warn):
                             obs[1] += 1
                         else:
                             obs[2] += 1
-                    # label = f'{id} {database[id]['del_area']} {conf:.2f}'
-                    label = f'{database[id]["del_area"]}'
+                    disp = f'{id} {area} {conf:.2f}'
                     frame = cv2.rectangle(frame, (x1,y1),(x2,y2),color,2)
-                    frame = cv2.putText(frame,label,(x1-1,y1-1),font,0.5,(255,0,255),1)
+                    frame = cv2.putText(frame,disp,(x1-1,y1-1),font,0.5,(255,0,255),1)
 
-                    height, width= frame.shape[:2]
+                    
                     refpt = (int(width/2),int(height))
                     dist = np.round(np.sqrt((refpt[0] - yc)**2 + (refpt[1] - xc)),1)
                     frame = cv2.line(frame,refpt , (int(width/2),0), (0,0,234),2)
-                    # frame = cv2.putText(frame,str(dist),(xc,yc),font,0.5,(255,0,255),1)
                     frame = cv2.arrowedLine(frame, refpt,(xc,yc),(123,232,324), 1)
                 
                 
@@ -179,7 +179,7 @@ def draw_boxes(database, frame, outputs, confs, left, right, obs, warn):
     frame = cv2.putText(frame,str(obs[1]) + warn[1],(right,frame.shape[:2][0]),font,0.5,(0,0,255),2)
     return database, frame
 
-def draw_ROI(frame,roi):
+def draw_ROI(frame,roi, ext_roi):
     height, width= frame.shape[:2]  
     left, right = int(roi * width), int((1-roi) * width)
     mid = int(width / 2)
@@ -187,6 +187,7 @@ def draw_ROI(frame,roi):
     ROI_region2 = [[(left,height),(left,0),(mid,0),(mid,height)]]
     frame = cv2.rectangle(frame, ROI_region[0][1],ROI_region[0][3],(0,0,0),1)
     frame = cv2.rectangle(frame, ROI_region2[0][1],ROI_region2[0][3],(0,0,0),1)
+    frame = cv2.rectangle(frame, (int(ext_roi*width),0),(int((1-ext_roi) * width), height),(0,0,0),1)
     return frame, left, right
 
 def x1y1x2y2_to_xywh(x1y1x2y2):
@@ -246,7 +247,7 @@ def track():
         
         obs = [0,0,0]
         warn = [" ", " ", " "]
-        frame, left, right = draw_ROI(frame, roi)
+        frame, left, right = draw_ROI(frame, roi, ext_roi)
         # frame = resize_with_padding(Image.fromarray(frame), dim)
         results = model(frame)
         
@@ -284,3 +285,13 @@ if __name__ == '__main__':
 # unique thresholds
 # width instead of area
 # wider fov - inform
+
+# inc warning avg - X
+# obj at extremities - X
+# obj at the center - X
+# soft threshold for angle of objects in ROI - X
+# inner roi with bigger threshold - no angle condition
+
+# person coming closer
+# del angle threshold based on position of obstacle
+# anomaly removal
