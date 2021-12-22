@@ -1,0 +1,8 @@
+To install PyAL:
+
+pip install python-openal
+git clone https://github.com/NicklasMCHD/PyAL.git
+cd PyAL
+python setup.py install
+
+
