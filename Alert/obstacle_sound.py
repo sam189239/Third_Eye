@@ -31,6 +31,29 @@ def translate_xy(x, y, h, w):
     y = int((int(y / h) * y_range) - (y_range/2))
     return x, y
 
+# source = []
+
+
+def warn_sound(x, y, h, w, sink, source):
+    x,y = translate_xy(x, y, h, w)    
+    source.position = [x, y, z_const]      
+    sink.update()
+
+
+# def warn_sound2(warn_db, h, w):
+#     # for s in source:
+#     #     # sink.stop(SoundSource(s))
+#     # source.clear()
+    
+#     for a in warn_db.keys():
+#         warn_db[a][0],warn_db[a][1] = translate_xy(warn_db[a][0],warn_db[a][1], h, w)    
+#         source.append((a,SoundSource(position=[warn_db[a][0],warn_db[a][1],z_const])))        
+    
+#     for s in source:
+#         s[1].looping = True
+#         s[1].queue(data)
+#         print(type(s[1]))
+#         sink.play(SoundSource(s[1]))
 if __name__ == '__main__':
 
     ## Loading model ##
@@ -112,6 +135,7 @@ if __name__ == '__main__':
         cv2.imshow("Object detection",final_img)
         cv2.waitKey(1)
         images.append(final_img)
+        # warn_sound(output[0],output[1], height, width, sink, source)
 
     ## Saving Output ##
     size = images[0].shape

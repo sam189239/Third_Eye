@@ -14,19 +14,15 @@ from collections import deque
 import math
 import time
 
-import pyttsx3 as tts
+## Sending alerts
+import http.client as httplib
+def send_alert():
+    c = httplib.HTTPConnection('localhost', 8080)
+    c.request('POST', '/process', '{}')
 
-# engine = tts.init()
-
-# from pydub import AudioSegment
-# from pydub.playback import play
-  
-# # for playing wav file
-# song = AudioSegment.from_wav("bounce.wav")
-
-from playsound import playsound
-  
-
+# def send_alert():
+#     data = '{}'
+#     response = requests.post("https://localhost:8080/process", data=data)
 
 ## Setting parameters and variables##
 save_dir =r'out\third_eye_tracker1.mp4'
@@ -35,7 +31,7 @@ deep_sort_weights = 'deep_sort_pytorch/deep_sort/deep/checkpoint/ckpt.t7'
 config_deepsort="deep_sort_pytorch/configs/deep_sort.yaml"
 font = cv2.FONT_HERSHEY_DUPLEX
 obstacles = ['car', 'person', 'motorcycle','truck','bicycle', 'parking meter', 'cow', 'dog']
-roi = 0.35
+roi = 0.3
 ext_roi = 0.1
 success = True
 threshold = 0.3
@@ -188,10 +184,8 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
 
     if obs_current[2] > 0: # mid
         warn_color = (0,0,255)
-        if obs_hist[2] != obs_current[2]: # no warning in prev frame
-            # engine.say("Left")
-            # engine.runAndWait()
-            playsound('bounce.wav')    
+        if obs_hist[2] != obs_current[2]: # new warning if no warning in prev frame
+            send_alert()
     elif obs_current[0] > 0 or obs_current[1] > 0: # left and right
         warn_color = (0,255,255)
     else:
@@ -319,10 +313,4 @@ if __name__ == '__main__':
 # person coming closer
 # del angle threshold based on position of obstacle
 # anomaly removal
-
 # VERY BIG OBJECTS IN THE MIDDLE OF ROI
-
-# alert for left right and mid, l+r
-# sudden variations due to missing bounding boxes
-# multithreading
-# remove extremity warning
