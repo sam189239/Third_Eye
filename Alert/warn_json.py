@@ -13,12 +13,12 @@ import numpy as np
 from collections import deque
 import math
 import time
+import json
 
-import pyttsx3 as tts
 
-
-from playsound import playsound
-  
+def send_state(data):
+    with open('obs_state.json', 'w') as f:
+        json.dump({"state":data}, f)
 
 
 ## Setting parameters and variables##
@@ -114,7 +114,6 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
                 yc = int(y1 + (y2-y1)/2) # center-y
                 area = int(((x2-x1) * (y2-y1))/100)
                 color = (0,255,0)
-                # height, width= frame.shape[:2]
                 left_ext, right_ext = int(ext_roi*width), int((1-ext_roi) * width) # external roi
                 if area>size_threshold[label] and (xc>=left_ext and xc<=right_ext):
                     ## Creating obs in database
@@ -152,7 +151,7 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
                         else:
                             obs[2] += 1
 
-                    disp = f'{label} {area} {conf:.2f}'
+                    disp = f'{id} {area} {conf:.2f}'
                     cv2.rectangle(frame, (x1,y1),(x2,y2),color,2)
                     cv2.putText(frame,disp,(x1-1,y1-1),font,0.5,(255,0,255),1)
 
@@ -175,26 +174,18 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
 
     warn_color = (0,255,0)
     global obs_hist, warn_count
+
     if obs_hist != obs_current:
+        send_state(obs_current) # sending current state to json
         print(obs_current)
         warn_count += 1
 
     if obs_current[2] > 0: # mid
         warn_color = (0,0,255)
-        if obs_hist[2] != obs_current[2]: # no warning in prev frame
-            playsound('warning.wav')  
-    elif obs_current[0] and obs_current[1]:# left and right
-        warn_color = (0,0,255)
-        if (obs_hist[1] != obs_current[1]) or (obs_hist[0] != obs_current[0]): # no warning in prev frame
-            playsound('warning.wav')
-    elif obs_current[0] > 0:
+        if obs_hist[2] != obs_current[2]: # new warning if no warning in prev frame
+            pass
+    elif obs_current[0] > 0 or obs_current[1] > 0: # left and right
         warn_color = (0,255,255)
-        if obs_hist[0] != obs_current[0]:
-            playsound('left.wav')
-    elif obs_current[1] > 0: 
-        warn_color = (0,255,255)
-        if obs_hist[1] != obs_current[1]:
-            playsound('right.wav')
     else:
         warn_color = (0,255,0)
     
