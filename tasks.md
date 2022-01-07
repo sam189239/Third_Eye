@@ -32,6 +32,7 @@
 
 
  remove warn_db
+ combine obstacle detection and tracking folders, add readme
 
  Current progress:
 
