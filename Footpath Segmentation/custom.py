@@ -18,11 +18,8 @@ cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.75
 cfg.MODEL.DEVICE = "cpu"
 
 predictor = DefaultPredictor(cfg)
-<<<<<<< HEAD
 path = '../data/client_vid_1.mp4'
-=======
 
->>>>>>> d711fc5233dee2afb866aca1ffc8a182faa1b733
 images = []
 cap = cv2.VideoCapture(path)
 
