@@ -127,7 +127,7 @@ def resize_with_padding(img, expected_size):
     padding = (pad_width, pad_height, delta_width - pad_width, delta_height - pad_height)
     return np.asarray(ImageOps.expand(img, padding))
 
-def save_output(images, fps):
+def save_output(images, fps, output_dir = output_dir):
     size = images[0].shape
     out = cv2.VideoWriter(output_dir,cv2.VideoWriter_fourcc(*'mp4v'), fps, (size[1],size[0]))
     for i in range(len(images)):

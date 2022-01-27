@@ -5,6 +5,8 @@ Files:
 - alert_3dsound.py -> Constantly reads the JSON file and starts and stops audio source as alerts for the user at left, right and mid -> Almost no delay (in use)
 - functions.py -> Contains the functions used in the main program, imported by warn_json.py
 
+- merged.py -> Combines warn_json.py and alert_3dsound.py at the cost of a minor delay
+
 - warn_sound.py -> Directly alerts through playsound module, has some delays (not used)
 - monitor_json.py -> Constantly reads the JSON file and plays alert sound when obs_state changes -> still involves delays as the state monitor doesn't capture changes when the audio is being played (not used)
 

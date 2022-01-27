@@ -9,6 +9,7 @@ warnings.filterwarnings("ignore")
 input_dir = r"..\data\VID-20220108-WA0006.mp4"
 output_dir =r'out\third_eye_tracker.mp4'
 
+
 roi = 0.35
 ext_roi = 0.1
 # success = True
@@ -20,10 +21,42 @@ warn_avg_size = 30
 del_angle_threshold = 0.2
 del_area_threshold = 0.35
 
+def start_alert():
+    from openal.audio import SoundSink, SoundSource
+    from openal.loaders import load_wav_file
+
+    sink = SoundSink()
+    sink.activate()
+
+    source = [SoundSource(position=[-5, 0, 0]),SoundSource(position=[5, 0, 0]), SoundSource(position=[0, 0, 5])] ## Left, Right, Mid
+
+    source[0].looping = True
+    source[1].looping = True
+    source[2].looping = True
+
+    data = load_wav_file("sounds/beep-07.wav")
+
+    source[0].queue(data)
+    source[1].queue(data)
+    source[2].queue(data)
+
+    return sink, source
+
+
+def alert_state(obs_current, sink, source):
+    time.sleep(0.3)
+    for a in [0,1,2]:
+        if obs_current[a]:
+            sink.play(source[a])
+            sink.update()
+        else:
+            sink.pause(source[a])
+            sink.update()
 
 
 
-def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db):
+
+def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db, sink, source):
     
     '''
     Performs the main algorithm to detect whether an object is a potential obstacle to the user.
@@ -123,7 +156,8 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
     ## Sending current obstacle state to json ##
     global obs_hist, warn_count
     if obs_hist != obs_current:
-        send_state(obs_current) 
+        alert_state(obs_current, sink, source)
+        # send_state(obs_current) 
         print(obs_current)
         warn_count += 1
 
@@ -143,7 +177,7 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
     return database, frame
 
 
-def track(input_dir, output_dir=output_dir):
+def track(input_dir, output_dir = output_dir):
 
     '''
     Initializes the Deepsort and YOLO model to obtain bounding boxes and object id.
@@ -168,6 +202,8 @@ def track(input_dir, output_dir=output_dir):
 
     database = {}
     cap = cv2.VideoCapture(input_dir)
+    
+    sink, source = start_alert()
 
     while True:
         success, frame = cap.read()
@@ -188,7 +224,7 @@ def track(input_dir, output_dir=output_dir):
             confs = det[:,4]
             clss = det[:,5]
             outputs = deepsort.update(xywhs, confs, clss, frame)
-            database, frame = detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db) #, sink, source)
+            database, frame = detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db, sink, source)
             images.append(frame)
             cv2.imshow("Object detection",frame)
             cv2.waitKey(1)
