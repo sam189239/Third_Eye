@@ -10,8 +10,3 @@ Obstacle detection/te
 data
 Tracking Obstacle/out
 Alert/out
-
-Footpath Segmentation/footpath1.mp4
-Footpath Segmentation/output_video.mp4
-Footpath Segmentation/Segmentation
-Footpath Segmentation/deeplabv3_xception65_ade20k.h5

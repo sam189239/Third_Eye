@@ -55,7 +55,6 @@ Set up alert system for live demo
 upto 18/1/22
  reduced false alarms
  tested options for alert sound
-<<<<<<< HEAD
  cleaned up code
 
 upto 24/1/22
@@ -67,6 +66,3 @@ upto 24/1/22
  merging warn and alert
  footpath
  webcam test
-=======
- documented and cleaned up code
->>>>>>> d711fc5233dee2afb866aca1ffc8a182faa1b733

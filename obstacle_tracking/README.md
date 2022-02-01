@@ -1,19 +1,18 @@
 ## Obstacle Detection, Tracking and Alerting 
 
 Files:
-- warn_json.py -> Outputs the obstacle state for every frame to obs_state.json (in use)
-- alert_3dsound.py -> Constantly reads the JSON file and starts and stops audio source as alerts for the user at left, right and mid -> Almost no delay (in use)
+- main_merged.py -> Detects and outputs the obstacle alarm state for every frame to obs_state.json (in use) and also runs alert_3dsound.py to give alert sounds (main script to be run)
+- alert_3dsound.py -> Constantly reads the JSON file and starts and stops audio source as alerts for the user at left, right and mid -> Almost no delay (not run directly (called within main_merged.py))
 - functions.py -> Contains the functions used in the main program, imported by warn_json.py
 
-- merged.py -> Combines warn_json.py and alert_3dsound.py at the cost of a minor delay
+- merged.py -> Combines warn_json.py and alert_3dsound.py at the cost of a minor delay - (sound sources are stopped and stopped within the main script)
 
 - warn_sound.py -> Directly alerts through playsound module, has some delays (not used)
 - monitor_json.py -> Constantly reads the JSON file and plays alert sound when obs_state changes -> still involves delays as the state monitor doesn't capture changes when the audio is being played (not used)
 
 
 To get inference:
-- Run alert_3dsound.py
-- In another terminal, run warn_json.py
+- Run "python main_merged.py"
 
 Overall algorithm of program:
 

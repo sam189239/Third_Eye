@@ -3,11 +3,15 @@ from deep_sort_pytorch.utils.parser import get_config
 from deep_sort_pytorch.deep_sort import DeepSort
 from functions import *
 warnings.filterwarnings("ignore")
+import subprocess
 
 ## Setting parameters and variables##
 
 input_dir = r"..\data\VID-20220108-WA0006.mp4"
 output_dir =r'out\third_eye_tracker.mp4'
+
+with open("obs_state.json", "w") as outfile:
+    outfile.write(json.dumps({"state": [0, 0, 0]}))
 
 roi = 0.35
 ext_roi = 0.1
@@ -21,6 +25,8 @@ del_angle_threshold = 0.2
 del_area_threshold = 0.35
 
 
+def alert_func():
+    subprocess.Popen("python alert_3dsound.py", shell=True)
 
 
 def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db):
@@ -123,7 +129,7 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
     ## Sending current obstacle state to json ##
     global obs_hist, warn_count
     if obs_hist != obs_current:
-        send_state(obs_current) 
+        send_state(obs_current)
         print(obs_current)
         warn_count += 1
 
@@ -143,7 +149,7 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
     return database, frame
 
 
-def track(input_dir, output_dir=output_dir):
+def track(input_dir, output_dir = output_dir):
 
     '''
     Initializes the Deepsort and YOLO model to obtain bounding boxes and object id.
@@ -165,6 +171,8 @@ def track(input_dir, output_dir=output_dir):
     print("loading.. yolo")    
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
+
+    alert_func() 
 
     database = {}
     cap = cv2.VideoCapture(input_dir)
@@ -188,7 +196,7 @@ def track(input_dir, output_dir=output_dir):
             confs = det[:,4]
             clss = det[:,5]
             outputs = deepsort.update(xywhs, confs, clss, frame)
-            database, frame = detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db) #, sink, source)
+            database, frame = detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
             images.append(frame)
             cv2.imshow("Object detection",frame)
             cv2.waitKey(1)
