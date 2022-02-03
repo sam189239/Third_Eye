@@ -1,13 +1,13 @@
- documentation and comments
+ documentation and comments - X
  
  threshold for slopes check necessity - X
  missing obstacle handling
  removing prev values if change is too much
  global threshold on size - X
- tracking readme
+ tracking readme - X
  avg the warnings over n frames - X
  unique thresholds - X
- wider fov - inform
+ wider fov - inform - X
 
  inc warning avg - X
  obj at extremities - X
@@ -15,16 +15,16 @@
  soft threshold for angle of objects in ROI - X
  inner roi with bigger threshold - no angle condition - X
 
- person coming closer
- del angle threshold based on position of obstacle
+ person coming closer - X
+ del angle threshold based on position of obstacle - X
  anomaly removal
 
  VERY BIG OBJECTS IN THE MIDDLE OF ROI
 
- alert for left right and mid, l+r
- sudden variations due to missing bounding boxes
- multithreading
- remove extremity warning
+ alert for left right and mid, l+r - X
+ sudden variations due to missing bounding boxes - X
+ multithreading - X
+ remove extremity warning - X
 
  removing color change for outside roi - X
  check averaging - X
@@ -32,8 +32,8 @@
  safe sound - X
 
 
- remove warn_db
- combine obstacle detection and tracking folders, add readme
+ remove warn_db - X
+ combine obstacle detection and tracking folders, add readme - X
 
  Current progress:
 
@@ -66,3 +66,12 @@ upto 24/1/22
  merging warn and alert
  footpath
  webcam test
+
+upto 3/2/2022
+ Set up single script with warn and alert but has a minor delay
+ Explored deployment options like Jetson Nano, Google Coral Edge TPU board
+ Merged Obstacle tracking module with other modules
+ Added subprocess implementation allowing calling another script in parallel, hence, no delay
+ Finalized single function needed for module to be run
+ Added requirements.txt for all modules
+ updated gitignores, readmes, running documentation
