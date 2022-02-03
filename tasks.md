@@ -63,11 +63,8 @@ upto 24/1/22
  moved the secondary functions to a different script
  created merge request with master branch
 
- merging warn and alert
- footpath
- webcam test
-
 upto 3/2/2022
+ Tested webcam input for live frame access - works
  Set up single script with warn and alert but has a minor delay
  Explored deployment options like Jetson Nano, Google Coral Edge TPU board
  Merged Obstacle tracking module with other modules
