@@ -1,11 +1,10 @@
 import cv2
 import torch
 import warnings
-from PIL import Image,ImageOps
+from PIL import ImageOps
 import numpy as np
 from collections import deque
 import math
-import time
 import json
 
 

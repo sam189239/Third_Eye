@@ -6,9 +6,6 @@ from openal.loaders import load_wav_file
 
 from json.decoder import JSONDecodeError
 import json
-from bottle import run, post, request, response
-from playsound import playsound
-import numpy as np
 import time
 
 json_file_path = "obs_state.json"
