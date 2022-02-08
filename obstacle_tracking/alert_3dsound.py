@@ -1,6 +1,4 @@
-import cv2 
 import time
-import math
 from openal.audio import SoundSink, SoundSource
 from openal.loaders import load_wav_file
 
@@ -27,27 +25,59 @@ source = [SoundSource(position=[-5, 0, 0]),SoundSource(position=[5, 0, 0]), Soun
 source[0].looping = True
 source[1].looping = True
 source[2].looping = True
+source[3].looping = False
 
 data = load_wav_file("sounds/beep-07.wav")
+crowd_sound = load_wav_file("sounds/crowd.wav")
 
 source[0].queue(data)
 source[1].queue(data)
 source[2].queue(data)
+source[3].queue(crowd_sound)
 
-while True:
-    try:
-        with open(json_file_path, 'r') as j:
-            contents = json.loads(j.read())
+if len(obs_hist)==3:
+    # print("without crowd")
+    while True:
+        try:
+            with open(json_file_path, 'r') as j:
+                contents = json.loads(j.read())
 
-            obs_current = contents['state']
-            time.sleep(0.3)
-            for a in [0,1,2]:
-                if obs_current[a]:
-                    sink.play(source[a])
+                obs_current = contents['state']
+                time.sleep(0.3)
+                for a in [0,1,2]:
+                    if obs_current[a]:
+                        sink.play(source[a])
+                        sink.update()
+                    else:
+                        sink.pause(source[a])
+                        sink.update()
+
+        except JSONDecodeError:
+            continue
+
+elif len(obs_hist) == 4:
+    # print("with crowd")
+    while True:
+        try:
+            with open(json_file_path, 'r') as j:
+                contents = json.loads(j.read())
+
+                obs_current = contents['state']
+                if obs_current[3]:
+                    for a in [0,1,2]:
+                        sink.pause(source[a])
+                        sink.update()
+                    sink.play(source[3])
                     sink.update()
-                else:
-                    sink.pause(source[a])
-                    sink.update()
+                    continue
+                time.sleep(0.3)
+                for a in [0,1,2]:
+                    if obs_current[a]:
+                        sink.play(source[a])
+                        sink.update()
+                    else:
+                        sink.pause(source[a])
+                        sink.update()
 
-    except JSONDecodeError:
-        continue
+        except JSONDecodeError:
+            continue
