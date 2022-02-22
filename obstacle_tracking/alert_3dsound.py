@@ -6,7 +6,7 @@ from json.decoder import JSONDecodeError
 import json
 import time
 
-crowd_detect = False
+crowd_detect = True
 
 json_file_path = "obs_state.json"
 with open(json_file_path, 'r') as j:

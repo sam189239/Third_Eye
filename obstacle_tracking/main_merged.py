@@ -133,7 +133,6 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
     ## Sending current obstacle state to json ##
     global obs_hist, warn_count
     obs_current.append(count_of_obstacles>=crowd_threshold)
-    # obs_current.append(sum(obs)>=crowd_threshold)
 
     if obs_hist != obs_current:
         send_state(obs_current)
