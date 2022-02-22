@@ -72,3 +72,13 @@ upto 3/2/2022
  Finalized single function needed for module to be run
  Added requirements.txt for all modules
  updated gitignores, readmes, running documentation
+
+
+upto 18/2/2022
+ Crowd detection
+ Discussed deployment techniques
+
+22/2/2022
+ Indian Currenct Detection
+ Collected data
+

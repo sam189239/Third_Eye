@@ -6,6 +6,8 @@ from json.decoder import JSONDecodeError
 import json
 import time
 
+crowd_detect = False
+
 json_file_path = "obs_state.json"
 with open(json_file_path, 'r') as j:
             contents = json.loads(j.read())
@@ -20,12 +22,12 @@ with open(json_file_path, 'r') as j:
 sink = SoundSink()
 sink.activate()
 
-source = [SoundSource(position=[-5, 0, 0]),SoundSource(position=[5, 0, 0]), SoundSource(position=[0, 0, 5])] ## Left, Right, Mid
+source = [SoundSource(position=[-5, 0, 0]),SoundSource(position=[5, 0, 0]), SoundSource(position=[0, 0, 5]), SoundSource(position=[0, 0, 0])] ## Left, Right, Mid
 
 source[0].looping = True
 source[1].looping = True
 source[2].looping = True
-source[3].looping = False
+source[3].looping = True
 
 data = load_wav_file("sounds/beep-07.wav")
 crowd_sound = load_wav_file("sounds/crowd.wav")
@@ -35,7 +37,7 @@ source[1].queue(data)
 source[2].queue(data)
 source[3].queue(crowd_sound)
 
-if len(obs_hist)==3:
+if not crowd_detect:
     # print("without crowd")
     while True:
         try:
@@ -55,7 +57,7 @@ if len(obs_hist)==3:
         except JSONDecodeError:
             continue
 
-elif len(obs_hist) == 4:
+else:
     # print("with crowd")
     while True:
         try:
@@ -69,9 +71,13 @@ elif len(obs_hist) == 4:
                         sink.update()
                     sink.play(source[3])
                     sink.update()
+                    time.sleep(1.06)
+                    sink.pause(source[3])
+                    sink.update()
+                    time.sleep(5)
                     continue
-                time.sleep(0.3)
-                for a in [0,1,2]:
+
+                for a in [0,1,2,3]:
                     if obs_current[a]:
                         sink.play(source[a])
                         sink.update()
@@ -81,3 +87,8 @@ elif len(obs_hist) == 4:
 
         except JSONDecodeError:
             continue
+
+
+# stop sound when no input
+# no other alerts when crowd is detected
+# crowd detection sound coming only once

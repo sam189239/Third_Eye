@@ -11,7 +11,7 @@ input_dir = r"..\data\VID-20220108-WA0006.mp4"
 output_dir =r'out\third_eye_tracker.mp4'
 
 with open("obs_state.json", "w") as outfile:
-    outfile.write(json.dumps({"state": [0, 0, 0]}))
+    outfile.write(json.dumps({"state": [0, 0, 0, False]}))
 
 roi = 0.35
 ext_roi = 0.1
@@ -23,6 +23,7 @@ size_threshold_outside_roi = {'car':220, 'person':80, 'motorcycle':150,'truck':2
 warn_avg_size = 30
 del_angle_threshold = 0.2
 del_area_threshold = 0.35
+crowd_threshold = 2
 
 
 def alert_func():
@@ -45,6 +46,8 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
     An additional overall warning circle is also added to the image output
 
     '''
+
+    count_of_obstacles = 0
 
     ## Dimensions of the frame ##
     mid = int((left+right)/2) 
@@ -79,6 +82,7 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
 
                     ## Based on del_area and del_angle ##
                     if x2>=left and x1<=right:    # Object inside ROI
+                        count_of_obstacles += 1
                         color = (0,255,255)    
                         if database[id]["del_angle"] < del_angle_threshold and database[id]['del_area'] > del_area_threshold: 
                             # Within ROI, angle decreasing, size increasing
@@ -128,6 +132,9 @@ def detect_obs(database, frame, outputs, confs, left, right, obs, warn, warn_db)
     
     ## Sending current obstacle state to json ##
     global obs_hist, warn_count
+    obs_current.append(count_of_obstacles>=crowd_threshold)
+    # obs_current.append(sum(obs)>=crowd_threshold)
+
     if obs_hist != obs_current:
         send_state(obs_current)
         print(obs_current)
@@ -202,7 +209,8 @@ def track(input_dir, output_dir = output_dir):
             cv2.waitKey(1)
         else:  
             deepsort.increment_ages()
-
+    cap.release()
+    cv2.destroyAllWindows()
     print(warn_count)
     save_output(images, 29, output_dir)
 
