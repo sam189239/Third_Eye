@@ -90,5 +90,4 @@ else:
 
 
 # stop sound when no input
-# no other alerts when crowd is detected
-# crowd detection sound coming only once
+
