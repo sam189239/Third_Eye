@@ -214,7 +214,7 @@ def track(input_dir, output_dir = output_dir):
     print(warn_count)
     save_output(images, 29, output_dir)
     with open("obs_state.json", "w") as outfile:
-    outfile.write(json.dumps({"state": [0, 0, 0, False]}))
+        outfile.write(json.dumps({"state": [0, 0, 0, False]}))
 
 
 if __name__ == '__main__':

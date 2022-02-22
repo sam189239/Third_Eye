@@ -89,5 +89,4 @@ else:
             continue
 
 
-# stop sound when no input
 
