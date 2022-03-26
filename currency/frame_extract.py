@@ -1,18 +1,19 @@
 import cv2
  
 # Opens the Video file
-cap= cv2.VideoCapture('data/vids/50.mp4')
 i=0
 j=0
-note = 'fifty'
-dir = 'data/frames/'+note+'/'
+note = 'ten'
+cap= cv2.VideoCapture('data/vids/'+note+'.mp4')
+dir = 'data/Training frames/'+note+'/'
 while(cap.isOpened()):
     ret, frame = cap.read()
     if ret == False:
         break
-    if i%1 == 0:
+    if i%10 == 0:
         # print(cv2.Laplacian(frame, cv2.CV_64F).var())
-        if cv2.Laplacian(frame, cv2.CV_64F).var() >= 450:
+        if cv2.Laplacian(frame, cv2.CV_64F).var() >= 100:
+            frame = cv2.resize(frame, (224,224))
             cv2.imwrite(dir+note+str(j)+'.jpg',frame)
             j+=1
     i+=1

@@ -73,12 +73,22 @@ upto 3/2/2022
  Added requirements.txt for all modules
  updated gitignores, readmes, running documentation
 
-
 upto 18/2/2022
  Crowd detection
  Discussed deployment techniques
 
-22/2/2022
+22/2/2022 - 25/3/2022
+ Merged modules
+ Cleaned up and made code more modular
+ Set up main repo with single script to access all modes
  Indian Currenct Detection
  Collected data
+ Cleaned data
+ Explored segmentation as an option
+ YOLO vs Detectron
+ Labelled data
+ Discussed Hardware options
+ Tested YOLO in Jetson nano
+ Workflow diagram for the different modules
+ 
 
