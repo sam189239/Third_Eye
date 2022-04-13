@@ -89,6 +89,15 @@ upto 18/2/2022
  Labelled data
  Discussed Hardware options
  Tested YOLO in Jetson nano
- Workflow diagram for the different modules
+ Workflow diagram for Obstacle mode
  
+ Workflow diagram for Face recognition, Everday object detection
 
+ Worked on the three new tasks for the sprint review - Test currency detection, conversion of models, deployment
+
+ 26/3/2022 - 
+ accessed ec2 instance and set up dependencies
+ worked on deployment requirements
+ Discuessed api requiements
+ added documentation for obstacle mode
+ tested api locally
