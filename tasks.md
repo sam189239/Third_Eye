@@ -101,3 +101,9 @@ upto 18/2/2022
  Discuessed api requiements
  added documentation for obstacle mode
  tested api locally
+ modified code to test on instance remotely
+
+ model conversion 
+ api setup
+ modification to be deployed
+ indian currency detection model - troubleshooting

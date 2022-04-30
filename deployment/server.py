@@ -1,44 +1,48 @@
-# from flask import Flask, Response, request
-# import requests
+# from fastapi import FastAPI, File, UploadFile
+# from fastapi.responses import Response
 # import os
-# import json
 # import uuid
 
-# app = Flask(__name__)
+# app = FastAPI()
 
-# @app.route('/upload', methods=['GET', 'POST'])
-# def upload():
-#     if request.method == 'POST':
-#         file = request.files['file']
-#         extension = os.path.splitext(file.filename)[1]
-#         f_name = str(uuid.uuid4()) + extension
-#         file.save(os.path.join(app.config['UPLOAD_FOLDER'], f_name))
-#         return json.dumps({'filename':f_name})
+# db = []
 
-# if __name__ == '__main__':
-# 	app.run(debug=True, host='0.0.0.0')
 
-## pip install fastapi, python-mulipart
-# pip install "uvicorn[standard]"
+# @app.post("/images/")
+# async def create_upload_file(file: UploadFile = File(...)):
+
+#     file.filename = f"{uuid.uuid4()}.jpg"
+#     contents = await file.read()  # <-- Important!
+
+#     db.append(contents)
+
+#     return {"filename": file.filename}
+
+import os
 
 from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import Response
-import os
-import uuid
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 
-db = []
+path = r"C:\Users\Bindu\Pictures\Camera Roll"
+
+@app.get("/")
+def index():
+    return {"Hello": "World"}
+
+# @app.post("/image", responses={200: {"image": "1st image", "content" : {"image/jpeg" : {"ima1" : "flower"}}}})
+# def image_endpoint():
+#     file_path = os.path.join(path, r"C:\Users\Bindu\Downloads\download.jpg")
+#     if os.path.exists(file_path):
+#         return FileResponse(file_path, media_type="image/jpeg", filename="vector_image_for_you.jpg")
+#     return {"error" : "File not found!"}
+
+@app.post("/files/")
+async def create_file(file: bytes = File(...)):
+    return {"file_size": len(file)}
 
 
-@app.post("/images/")
-async def create_upload_file(file: UploadFile = File(...)):
-
-    file.filename = f"{uuid.uuid4()}.jpg"
-    contents = await file.read()  # <-- Important!
-
-    db.append(contents)
-
+@app.post("/uploadfile/")
+async def create_upload_file(file: UploadFile):
     return {"filename": file.filename}
-
- 

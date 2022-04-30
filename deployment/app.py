@@ -4,7 +4,7 @@ import json
 # import request
 import requests
 
-api = 'http://localhost:8000'
+api = 'http://localhost:8000/files/'
 image_file = r'C:\Users\Sam\Desktop\Screenshott.jpg'
 
 with open(image_file, "rb") as f:
