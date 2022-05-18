@@ -108,5 +108,7 @@ upto 18/2/2022
  modification to be deployed
  indian currency detection model - troubleshooting
 
- 10/5/2022 - 
- Set up openvino runtime locally and tried sample applications
+ 10/5/2022 - 18/05/2022
+ Set up openvino runtime locally and tried sample applications\
+ Set up shorter demo video for KIT pitch
+ Pushed current repo to github
