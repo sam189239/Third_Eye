@@ -95,7 +95,7 @@ upto 18/2/2022
 
  Worked on the three new tasks for the sprint review - Test currency detection, conversion of models, deployment
 
- 26/3/2022 - 
+ 26/3/2022 - 9/05/2022
  accessed ec2 instance and set up dependencies
  worked on deployment requirements
  Discuessed api requiements
@@ -107,3 +107,6 @@ upto 18/2/2022
  api setup
  modification to be deployed
  indian currency detection model - troubleshooting
+
+ 10/5/2022 - 
+ Set up openvino runtime locally and tried sample applications

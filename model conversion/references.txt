@@ -1,0 +1,11 @@
+https://github.com/openvinotoolkit/openvino_notebooks
+https://docs.openvino.ai/latest/openvino_docs_MO_DG_prepare_model_convert_model_Convert_Model_From_ONNX.html#doxid-openvino-docs-m-o-d-g-prepare-model-convert-model-convert-model-from-o-n-n-x
+https://docs.openvino.ai/latest/openvino_docs_OV_UG_OV_Runtime_User_Guide.html#doxid-openvino-docs-o-v-u-g-o-v-runtime-user-guide
+https://docs.openvino.ai/latest/openvino_docs_MO_DG_Deep_Learning_Model_Optimizer_DevGuide.html
+
+https://www.intel.com/content/www/us/en/developer/articles/technical/arm-sbc-and-ncs2.html
+https://www.intel.com/content/www/us/en/developer/articles/guide/raspberry-pi-4-and-intel-neural-compute-stick-2-setup.html
+
+https://thenewstack.io/tutorial-using-a-pre-trained-onnx-model-for-inferencing/
+https://thenewstack.io/tutorial-accelerate-ai-at-edge-with-onnx-runtime-and-intel-neural-compute-stick-2/
+https://onnxruntime.ai/docs/get-started/with-python.html
